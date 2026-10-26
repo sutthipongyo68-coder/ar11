@@ -1,0 +1,1707 @@
+<!DOCTYPE html>
+<html lang="th" class="h-full select-none">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DATA DETECTIVE — นักสืบพิชิตข้อมูล ม.2</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            dark: '#080c16',
+                            card: 'rgba(15, 23, 42, 0.85)',
+                            border: 'rgba(0, 240, 255, 0.3)',
+                            cyan: '#00f0ff',
+                            purple: '#8a2be2',
+                            pink: '#ff007f',
+                            accent: '#3b82f6',
+                            gold: '#ffd700'
+                        }
+                    },
+                    fontFamily: {
+                        kanit: ['Kanit', 'sans-serif']
+                    },
+                    animation: {
+                        'pulse-glow': 'pulseGlow 2.5s infinite',
+                        'scanline': 'scanline 8s linear infinite',
+                        'float': 'float 3s ease-in-out infinite',
+                        'pop-in': 'popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                    },
+                    keyframes: {
+                        pulseGlow: {
+                            '0%, 100%': { boxShadow: '0 0 15px rgba(0, 240, 255, 0.3), inset 0 0 10px rgba(0, 240, 255, 0.15)' },
+                            '50%': { boxShadow: '0 0 30px rgba(0, 240, 255, 0.7), inset 0 0 20px rgba(0, 240, 255, 0.35)' }
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-6px)' }
+                        },
+                        popIn: {
+                            '0%': { opacity: '0', transform: 'scale(0.85)' },
+                            '100%': { opacity: '1', transform: 'scale(1)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- FontAwesome Icons & Kanit Google Font -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Canvas Confetti Library for Victories -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: #080c16;
+            color: #f3f4f6;
+            touch-action: manipulation;
+            overflow-x: hidden;
+        }
+
+        /* Cyber Glassmorphism Components */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.82);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 240, 255, 0.25);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-button {
+            background: rgba(0, 240, 255, 0.08);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-button:hover:not(:disabled) {
+            background: rgba(0, 240, 255, 0.22);
+            border-color: rgba(0, 240, 255, 0.8);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .glass-button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .glass-button-primary {
+            background: linear-gradient(135deg, rgba(0,240,255,0.2) 0%, rgba(138,43,226,0.3) 100%);
+            border: 1px solid #00f0ff;
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+        }
+
+        .glass-button-primary:hover:not(:disabled) {
+            background: linear-gradient(135deg, rgba(0,240,255,0.4) 0%, rgba(138,43,226,0.5) 100%);
+            box-shadow: 0 0 25px rgba(0, 240, 255, 0.6);
+        }
+
+        /* Evidence Card States */
+        .clue-card {
+            transition: all 0.25s ease;
+            position: relative;
+        }
+
+        .clue-card.pinned {
+            border-color: #ffd700 !important;
+            background: rgba(255, 215, 0, 0.12) !important;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+        }
+
+        .clue-card.eliminated {
+            opacity: 0.45;
+            filter: grayscale(80%);
+            text-decoration: line-through;
+            border-color: #ef4444 !important;
+            background: rgba(239, 68, 68, 0.1) !important;
+        }
+
+        /* Custom Neon Scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(8, 12, 22, 0.7);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 240, 255, 0.4);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 240, 255, 0.8);
+        }
+
+        /* Grid Background Pattern */
+        .cyber-grid {
+            background-size: 40px 40px;
+            background-image: 
+                linear-gradient(to right, rgba(0, 240, 255, 0.04) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0, 240, 255, 0.04) 1px, transparent 1px);
+        }
+
+        /* Deduction Grid Cell Button */
+        .deduction-cell {
+            transition: all 0.15s ease;
+        }
+        .deduction-cell.state-match {
+            background-color: rgba(34, 197, 94, 0.25) !important;
+            border-color: #22c55e !important;
+            color: #4ade80;
+        }
+        .deduction-cell.state-cross {
+            background-color: rgba(239, 68, 68, 0.2) !important;
+            border-color: #ef4444 !important;
+            color: #f87171;
+        }
+    </style>
+</head>
+<body class="h-full w-full bg-cyber-dark text-gray-100 flex flex-col justify-between relative min-h-screen cyber-grid">
+
+    <!-- CANVAS BACKGROUND PARTICLES & CONNECTORS -->
+    <canvas id="bg-canvas" class="fixed inset-0 pointer-events-none z-0 w-full h-full opacity-40"></canvas>
+
+    <!-- GLOBAL TOP APP BAR -->
+    <header class="relative z-20 w-full max-w-7xl mx-auto px-4 py-3 flex items-center justify-between border-b border-cyber-cyan/20 glass-panel mt-2 rounded-2xl">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="game.showScreen('home')">
+            <div class="w-10 h-10 rounded-xl bg-cyber-cyan/20 border border-cyber-cyan flex items-center justify-center text-cyber-cyan text-xl shadow-[0_0_10px_#00f0ff]">
+                <i class="fa-solid fa-user-secret"></i>
+            </div>
+            <div>
+                <h1 class="font-extrabold text-base md:text-lg tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-cyber-cyan via-white to-cyber-purple">
+                    DATA DETECTIVE
+                </h1>
+                <p class="text-[10px] text-gray-400">วิทยาการคำนวณ ม.2 — การวิเคราะห์ข้อมูล</p>
+            </div>
+        </div>
+
+        <!-- Player Summary Header Stats -->
+        <div class="flex items-center gap-3 md:gap-6 text-xs md:text-sm">
+            <!-- Detective Rank -->
+            <div class="flex items-center gap-2 bg-cyber-dark/80 px-3 py-1.5 rounded-xl border border-cyber-purple/40">
+                <span id="hdr-rank-icon" class="text-cyber-gold text-base">🔰</span>
+                <div>
+                    <span class="text-[9px] text-gray-400 block leading-none">RANK</span>
+                    <span id="hdr-rank-title" class="font-bold text-cyber-cyan text-xs">Rookie</span>
+                </div>
+            </div>
+
+            <!-- Total Score -->
+            <div class="flex items-center gap-2 bg-cyber-dark/80 px-3 py-1.5 rounded-xl border border-cyber-cyan/40">
+                <i class="fa-solid fa-trophy text-cyber-gold"></i>
+                <div>
+                    <span class="text-[9px] text-gray-400 block leading-none">SCORE</span>
+                    <span id="hdr-score" class="font-bold text-white text-xs">0</span>
+                </div>
+            </div>
+
+            <!-- Profile Quick Btn -->
+            <button onclick="game.showScreen('profile')" class="glass-button p-2 rounded-xl text-cyber-cyan flex items-center gap-1 hover:text-white">
+                <i class="fa-solid fa-id-card text-base"></i>
+                <span id="hdr-player-name" class="hidden md:inline font-semibold text-xs ml-1">นักสืบ</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="relative z-10 flex-1 w-full max-w-7xl mx-auto px-3 py-4 flex flex-col justify-center">
+
+        <!-- ==================== SCREEN 1: HOME MENU ==================== -->
+        <section id="screen-home" class="w-full flex flex-col items-center justify-center my-auto py-6 space-y-8 animate-pop-in">
+            <!-- Hero Title Badge -->
+            <div class="text-center space-y-3">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyber-purple/30 border border-cyber-purple text-xs md:text-sm font-semibold tracking-wider text-cyber-cyan uppercase shadow-[0_0_15px_rgba(138,43,226,0.3)]">
+                    <i class="fa-solid fa-brain text-cyber-pink"></i> การวิเคราะห์และเชื่อมโยงข้อมูลเชิงตรรกะ
+                </div>
+                <div class="text-6xl md:text-8xl my-2 text-cyber-cyan animate-float filter drop-shadow-[0_0_20px_#00f0ff]">
+                    🕵️‍♂️
+                </div>
+                <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight text-white drop-shadow-[0_4px_12px_rgba(0,240,255,0.4)]">
+                    DATA DETECTIVE
+                </h1>
+                <p class="text-cyber-cyan/90 font-medium text-sm md:text-lg max-w-lg mx-auto italic">
+                    “ทุกข้อมูลมีความจริงซ่อนอยู่... อยู่ที่ว่าคุณจะเชื่อมโยงมันอย่างไร”
+                </p>
+            </div>
+
+            <!-- Navigation Main Buttons -->
+            <div class="w-full max-w-md space-y-3">
+                <button onclick="game.showScreen('cases')" class="glass-button glass-button-primary w-full py-4 rounded-2xl font-bold text-base md:text-lg text-white flex items-center justify-center gap-3">
+                    <i class="fa-solid fa-play text-cyber-cyan"></i>
+                    <span>START INVESTIGATION (เริ่มสืบสวน)</span>
+                </button>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="game.showScreen('cases')" class="glass-button py-3 px-4 rounded-xl font-semibold text-sm text-gray-200 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-folder-open text-cyber-cyan"></i>
+                        <span>แฟ้มคดีทั้งหมด</span>
+                    </button>
+                    <button onclick="game.showScreen('leaderboard')" class="glass-button py-3 px-4 rounded-xl font-semibold text-sm text-gray-200 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-ranking-star text-cyber-gold"></i>
+                        <span>กระดานผู้นำ</span>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="game.openHowToPlayModal()" class="glass-button py-3 px-4 rounded-xl font-semibold text-sm text-gray-200 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-book-open text-cyber-pink"></i>
+                        <span>วิธีเล่นเกม</span>
+                    </button>
+                    <button onclick="game.openSettingsModal()" class="glass-button py-3 px-4 rounded-xl font-semibold text-sm text-gray-200 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-sliders text-cyber-purple"></i>
+                        <span>ตั้งค่าระบบ</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quick Stats Bar Footnote -->
+            <div class="glass-panel px-6 py-3 rounded-2xl flex items-center justify-around gap-6 text-xs text-gray-300 border-cyber-cyan/20">
+                <div class="text-center">
+                    <span class="text-gray-400 block text-[10px]">คดีพิชิตแล้ว</span>
+                    <span id="home-stat-completed" class="font-bold text-cyber-cyan text-sm">0 / 10</span>
+                </div>
+                <div class="h-6 w-[1px] bg-cyber-cyan/20"></div>
+                <div class="text-center">
+                    <span class="text-gray-400 block text-[10px]">ดาวรวมสะสม</span>
+                    <span id="home-stat-stars" class="font-bold text-cyber-gold text-sm">0 ⭐</span>
+                </div>
+                <div class="h-6 w-[1px] bg-cyber-cyan/20"></div>
+                <div class="text-center">
+                    <span class="text-gray-400 block text-[10px]">ระดับยศปัจจุบัน</span>
+                    <span id="home-stat-rank" class="font-bold text-cyber-pink text-sm">Rookie</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== SCREEN 2: CASE SELECT MENU ==================== -->
+        <section id="screen-cases" class="w-full flex flex-col space-y-6 hidden animate-pop-in">
+            <!-- Header Banner -->
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-cyber-cyan/20 pb-4">
+                <div>
+                    <h2 class="text-2xl md:text-3xl font-extrabold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-folder-closed text-cyber-cyan"></i>
+                        <span>DATA ARCHIVE (คลังคดีปริศนา)</span>
+                    </h2>
+                    <p class="text-xs md:text-sm text-gray-400">เลือกลำดับคดีเพื่อทำการวิเคราะห์และพิสูจน์ข้อเท็จจริง</p>
+                </div>
+
+                <button onclick="game.showScreen('home')" class="glass-button px-4 py-2 rounded-xl text-xs font-semibold text-cyber-cyan flex items-center gap-2 self-start md:self-auto">
+                    <i class="fa-solid fa-arrow-left"></i> กลับสู่หน้าหลัก
+                </button>
+            </div>
+
+            <!-- Grid of 10 Case Files -->
+            <div id="cases-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Cases generated dynamically by JS -->
+            </div>
+        </section>
+
+        <!-- ==================== SCREEN 3: GAMEPLAY SCREEN ==================== -->
+        <section id="screen-gameplay" class="w-full flex flex-col space-y-4 hidden">
+            
+            <!-- Gameplay Top Info Bar -->
+            <div class="glass-panel p-3 rounded-2xl flex flex-wrap items-center justify-between gap-3 border-cyber-cyan/30">
+                <div class="flex items-center gap-3">
+                    <button onclick="game.confirmExitCase()" class="glass-button p-2 rounded-xl text-gray-400 hover:text-white" title="ถอนตัวจากคดี">
+                        <i class="fa-solid fa-door-open text-base"></i>
+                    </button>
+                    <div>
+                        <span id="game-case-id" class="text-[10px] font-bold text-cyber-cyan tracking-wider uppercase block">CASE #01</span>
+                        <h3 id="game-case-title" class="text-sm md:text-base font-bold text-white leading-tight">ชื่อคดีสืบสวน</h3>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-4 text-xs md:text-sm">
+                    <!-- Hearts / Lives -->
+                    <div class="flex items-center gap-1 bg-cyber-dark/80 px-3 py-1.5 rounded-xl border border-red-500/30">
+                        <span class="text-[10px] text-gray-400 mr-1">LIVES</span>
+                        <div id="game-lives" class="flex gap-1 text-red-500">
+                            <i class="fa-solid fa-heart"></i>
+                            <i class="fa-solid fa-heart"></i>
+                            <i class="fa-solid fa-heart"></i>
+                        </div>
+                    </div>
+
+                    <!-- Timer -->
+                    <div id="game-timer-box" class="flex items-center gap-2 bg-cyber-dark/80 px-3 py-1.5 rounded-xl border border-cyber-cyan/40">
+                        <i class="fa-solid fa-clock text-cyber-cyan"></i>
+                        <span id="game-timer" class="font-mono font-bold text-cyber-cyan">05:00</span>
+                    </div>
+
+                    <!-- Hints button -->
+                    <button id="btn-use-hint" onclick="game.triggerHint()" class="glass-button px-3 py-1.5 rounded-xl font-semibold text-cyber-gold text-xs flex items-center gap-1.5">
+                        <i class="fa-solid fa-lightbulb"></i>
+                        <span>คำใบ้ (<span id="hint-count-display">3</span>)</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Investigation Workspace Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                
+                <!-- LEFT COLUMN: Case Brief & Clues Workspace (7 cols) -->
+                <div class="lg:col-span-7 space-y-4 flex flex-col">
+                    
+                    <!-- Case Scenario Brief Panel -->
+                    <div class="glass-panel p-4 md:p-5 rounded-2xl border-cyber-purple/30 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-cyber-purple uppercase tracking-wider flex items-center gap-1.5">
+                                <i class="fa-solid fa-file-lines"></i> รายงานสถานการณ์คดี
+                            </span>
+                            <span id="case-difficulty-badge" class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-cyber-cyan/20 text-cyber-cyan border border-cyber-cyan/40">
+                                EASY
+                            </span>
+                        </div>
+                        <p id="game-case-desc" class="text-xs md:text-sm text-gray-200 leading-relaxed">
+                            รายละเอียดเหตุการณ์และข้อมูลตั้งต้นสำหรับการเริ่มสืบสวน...
+                        </p>
+                    </div>
+
+                    <!-- Interactive Clues / Evidence Board -->
+                    <div class="glass-panel p-4 md:p-5 rounded-2xl border-cyber-cyan/30 flex-1 flex flex-col space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h4 class="text-xs md:text-sm font-bold text-cyber-cyan flex items-center gap-2">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <span>เบาะแสและข้อมูลที่รวบรวมได้ (EVIDENCES)</span>
+                            </h4>
+                            <span class="text-[10px] text-gray-400">แตะเบาะแสเพื่อ [📌 ปักหมุด] หรือ [❌ ตัดทิ้ง]</span>
+                        </div>
+
+                        <!-- Clues Container List -->
+                        <div id="clues-container" class="space-y-2 max-h-[320px] overflow-y-auto pr-1">
+                            <!-- Clue items rendered by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT COLUMN: Data Deduction Matrix & Solve Area (5 cols) -->
+                <div class="lg:col-span-5 space-y-4 flex flex-col">
+                    
+                    <!-- Interactive Deduction Grid Matrix (Helper Tool) -->
+                    <div class="glass-panel p-4 rounded-2xl border-cyber-cyan/30 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h4 class="text-xs font-bold text-cyber-gold flex items-center gap-1.5">
+                                <i class="fa-solid fa-table-cells"></i>
+                                <span>ตารางช่วยคิดและตัดตัวเลือก (MATRIX)</span>
+                            </h4>
+                            <button onclick="game.resetMatrixGrid()" class="text-[10px] text-gray-400 hover:text-cyber-cyan underline">
+                                รีเซ็ตตาราง
+                            </button>
+                        </div>
+                        <p class="text-[11px] text-gray-400">คลิกช่องตารางเพื่อสลับสถานะ: [ว่าง] ➔ [✔️ ใช่] ➔ [❌ ไม่ใช่]</p>
+                        
+                        <div id="deduction-matrix-container" class="overflow-x-auto">
+                            <!-- Matrix table generated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Final Answer / Verdict Panel -->
+                    <div class="glass-panel p-4 rounded-2xl border-cyber-pink/40 space-y-3 bg-gradient-to-b from-cyber-card to-cyber-purple/20">
+                        <h4 class="text-xs md:text-sm font-bold text-cyber-pink flex items-center gap-1.5">
+                            <i class="fa-solid fa-gavel"></i>
+                            <span id="verdict-question-title">ข้อสรุปและการตัดสินคดี</span>
+                        </h4>
+
+                        <!-- Dynamic Answer Input Controls (Select or Multi Options) -->
+                        <div id="verdict-options-container" class="space-y-2">
+                            <!-- Answer inputs rendered by JS -->
+                        </div>
+
+                        <!-- Solve Action Button -->
+                        <button id="btn-submit-solution" onclick="game.submitCaseSolution()" class="glass-button glass-button-primary w-full py-3 rounded-xl font-bold text-sm text-white flex items-center justify-center gap-2 mt-3">
+                            <i class="fa-solid fa-key text-cyber-cyan"></i>
+                            <span>SOLVE CASE (ส่งคำตอบตัดสินคดี)</span>
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== SCREEN 4: EDUCATIONAL FEEDBACK & REWARD ==================== -->
+        <section id="screen-feedback" class="w-full max-w-2xl mx-auto flex flex-col items-center justify-center hidden animate-pop-in py-6">
+            <div class="glass-panel p-6 md:p-8 rounded-3xl w-full text-center space-y-6 border-cyber-cyan/50 relative overflow-hidden">
+                <!-- Status Header Banner -->
+                <div id="feedback-status-icon" class="w-20 h-20 rounded-full bg-cyber-cyan/20 border-2 border-cyber-cyan text-cyber-cyan text-4xl mx-auto flex items-center justify-center shadow-[0_0_25px_#00f0ff] animate-float">
+                    <i class="fa-solid fa-check"></i>
+                </div>
+
+                <div>
+                    <span id="feedback-case-tag" class="text-xs font-bold text-cyber-cyan uppercase tracking-wider block mb-1">CASE 01 SOLVED</span>
+                    <h2 id="feedback-title" class="text-2xl md:text-4xl font-extrabold text-white">ไขคดีสำเร็จแล้ว!</h2>
+                </div>
+
+                <!-- Star Rating & Score Box -->
+                <div class="bg-cyber-dark/80 p-4 rounded-2xl border border-cyber-cyan/20 flex justify-around items-center">
+                    <div>
+                        <span class="text-[10px] text-gray-400 block uppercase">คะแนนคดีนี้</span>
+                        <span id="feedback-score" class="text-2xl font-black text-cyber-cyan">+500</span>
+                    </div>
+                    <div class="h-8 w-[1px] bg-cyber-cyan/20"></div>
+                    <div>
+                        <span class="text-[10px] text-gray-400 block uppercase">ระดับผลงาน</span>
+                        <div id="feedback-stars" class="text-cyber-gold text-lg">
+                            ⭐⭐⭐
+                        </div>
+                    </div>
+                    <div class="h-8 w-[1px] bg-cyber-cyan/20"></div>
+                    <div>
+                        <span class="text-[10px] text-gray-400 block uppercase">เวลาที่ใช้</span>
+                        <span id="feedback-time" class="text-sm font-bold text-white">01:45</span>
+                    </div>
+                </div>
+
+                <!-- Educational Feedback Core Lesson -->
+                <div class="text-left bg-cyber-purple/20 p-4 rounded-2xl border border-cyber-purple/40 space-y-2">
+                    <h4 class="text-xs font-bold text-cyber-cyan uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-graduation-cap text-cyber-pink"></i> แนวคิดวิทยาการคำนวณที่ได้เรียนรู้ (Educational Feedback)
+                    </h4>
+                    <p id="feedback-lesson-text" class="text-xs md:text-sm text-gray-200 leading-relaxed">
+                        ในคดีนี้คุณได้ฝึกการรวบรวมข้อมูลดิบ และแยกแยะข้อมูลที่ไม่เกี่ยวข้องออกโดยใช้ตรรกะนิรนัย...
+                    </p>
+                </div>
+
+                <!-- Next Actions -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                    <button onclick="game.showScreen('cases')" class="glass-button py-3 rounded-xl font-bold text-xs text-gray-200 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-folder-open text-cyber-cyan"></i>
+                        <span>เลือกคดีอื่น</span>
+                    </button>
+                    <button id="btn-next-case" onclick="game.proceedToNextCase()" class="glass-button glass-button-primary py-3 rounded-xl font-bold text-xs text-white flex items-center justify-center gap-2">
+                        <span>ไปคดีถัดไป</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== SCREEN 5: PLAYER PROFILE ==================== -->
+        <section id="screen-profile" class="w-full max-w-3xl mx-auto flex flex-col space-y-6 hidden animate-pop-in">
+            <!-- Profile Header -->
+            <div class="flex items-center justify-between border-b border-cyber-cyan/20 pb-4">
+                <h2 class="text-2xl font-extrabold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-id-card text-cyber-cyan"></i>
+                    <span>DETECTIVE PROFILE (ข้อมูลนักสืบ)</span>
+                </h2>
+                <button onclick="game.showScreen('home')" class="glass-button px-4 py-2 rounded-xl text-xs font-semibold text-cyber-cyan">
+                    <i class="fa-solid fa-arrow-left"></i> กลับ
+                </button>
+            </div>
+
+            <!-- Card Banner -->
+            <div class="glass-panel p-6 rounded-3xl border-cyber-cyan/40 flex flex-col md:flex-row items-center gap-6">
+                <!-- Avatar & Name Config -->
+                <div class="flex flex-col items-center space-y-3">
+                    <div class="relative w-28 h-28 rounded-full bg-cyber-dark border-2 border-cyber-cyan shadow-[0_0_20px_#00f0ff] flex items-center justify-center text-5xl">
+                        <span id="profile-avatar-icon">🕵️‍♂️</span>
+                        <button onclick="game.cycleAvatar()" class="absolute bottom-0 right-0 p-2 rounded-full bg-cyber-purple border border-white text-white text-xs" title="เปลี่ยน Avatar">
+                            <i class="fa-solid fa-rotate"></i>
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="text" id="input-profile-name" maxlength="15" value="นักสืบ" class="bg-cyber-dark border border-cyber-cyan/40 rounded-lg px-3 py-1 text-sm font-bold text-white text-center focus:outline-none focus:border-cyber-cyan">
+                        <button onclick="game.saveProfileName()" class="text-xs text-cyber-cyan hover:underline">บันทึก</button>
+                    </div>
+                </div>
+
+                <!-- Detailed Stats Grid -->
+                <div class="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-3 w-full">
+                    <div class="bg-cyber-dark/80 p-3 rounded-xl border border-cyber-cyan/20 text-center">
+                        <span class="text-[10px] text-gray-400 block uppercase">ยศปัจจุบัน</span>
+                        <span id="prof-rank" class="font-extrabold text-cyber-cyan text-sm">Rookie</span>
+                    </div>
+                    <div class="bg-cyber-dark/80 p-3 rounded-xl border border-cyber-cyan/20 text-center">
+                        <span class="text-[10px] text-gray-400 block uppercase">คะแนนรวม</span>
+                        <span id="prof-score" class="font-extrabold text-cyber-gold text-sm">0</span>
+                    </div>
+                    <div class="bg-cyber-dark/80 p-3 rounded-xl border border-cyber-cyan/20 text-center">
+                        <span class="text-[10px] text-gray-400 block uppercase">คดีที่ผ่าน</span>
+                        <span id="prof-cases" class="font-extrabold text-white text-sm">0 / 10</span>
+                    </div>
+                    <div class="bg-cyber-dark/80 p-3 rounded-xl border border-cyber-cyan/20 text-center">
+                        <span class="text-[10px] text-gray-400 block uppercase">ดาวสะสม</span>
+                        <span id="prof-stars" class="font-extrabold text-cyber-gold text-sm">0 ⭐</span>
+                    </div>
+                    <div class="bg-cyber-dark/80 p-3 rounded-xl border border-cyber-cyan/20 text-center">
+                        <span class="text-[10px] text-gray-400 block uppercase">ใช้น้อยสุด</span>
+                        <span id="prof-hints" class="font-extrabold text-cyber-pink text-sm">0 Hints</span>
+                    </div>
+                    <div class="bg-cyber-dark/80 p-3 rounded-xl border border-cyber-cyan/20 text-center">
+                        <span class="text-[10px] text-gray-400 block uppercase">เวลารวม</span>
+                        <span id="prof-time" class="font-extrabold text-white text-sm">00:00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Achievements Unlocked Showcase -->
+            <div class="glass-panel p-5 rounded-3xl border-cyber-purple/30 space-y-3">
+                <h3 class="text-sm font-bold text-cyber-purple uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-award text-cyber-gold"></i>
+                    <span>เหรียญรางวัลเกียรติยศ (ACHIEVEMENTS)</span>
+                </h3>
+
+                <div id="achievements-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <!-- Achievements list rendered by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== SCREEN 6: LEADERBOARD ==================== -->
+        <section id="screen-leaderboard" class="w-full max-w-2xl mx-auto flex flex-col space-y-6 hidden animate-pop-in">
+            <div class="flex items-center justify-between border-b border-cyber-cyan/20 pb-4">
+                <h2 class="text-2xl font-extrabold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-ranking-star text-cyber-gold"></i>
+                    <span>TOP DATA DETECTIVES (กระดานผู้นำ)</span>
+                </h2>
+                <button onclick="game.showScreen('home')" class="glass-button px-4 py-2 rounded-xl text-xs font-semibold text-cyber-cyan">
+                    <i class="fa-solid fa-arrow-left"></i> กลับ
+                </button>
+            </div>
+
+            <div class="glass-panel p-5 rounded-3xl border-cyber-gold/30 space-y-3">
+                <p class="text-xs text-gray-400">ตารางแสดงรายชื่อนักสืบข้อมูลระดับท็อปประจำศูนย์ DATA ARCHIVE</p>
+
+                <div id="leaderboard-list" class="space-y-2">
+                    <!-- Leaderboard content injected by JS -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER COPYRIGHT & STATUS -->
+    <footer class="relative z-10 w-full text-center py-3 text-[11px] text-gray-500 border-t border-cyber-cyan/10 bg-cyber-dark/90 backdrop-blur-md">
+        <span>DATA DETECTIVE © 2026 — สื่อการเรียนรู้วิทยาการคำนวณ ระดับมัธยมศึกษาปีที่ 2</span>
+    </footer>
+
+    <!-- ==================== MODAL OVERLAYS ==================== -->
+
+    <!-- Modal 1: How To Play -->
+    <div id="modal-howtoplay" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="glass-panel p-6 rounded-3xl max-w-lg w-full border-cyber-cyan/50 space-y-4 animate-pop-in">
+            <div class="flex items-center justify-between border-b border-cyber-cyan/20 pb-3">
+                <h3 class="text-lg font-bold text-cyber-cyan flex items-center gap-2">
+                    <i class="fa-solid fa-book-open"></i> คู่มือการสืบสวนคดีข้อมูล
+                </h3>
+                <button onclick="game.closeModals()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <div class="space-y-3 text-xs md:text-sm text-gray-200 leading-relaxed max-h-[60vh] overflow-y-auto pr-1">
+                <div class="flex items-start gap-3 bg-cyber-dark/60 p-3 rounded-xl border border-cyber-cyan/20">
+                    <span class="text-cyber-cyan font-bold text-base">1.</span>
+                    <p><strong>ตรวจสอบเบาะแส:</strong> อ่านรายงานสถานการณ์ และวิเคราะห์หลักฐานที่มีในแต่ละคดี</p>
+                </div>
+                <div class="flex items-start gap-3 bg-cyber-dark/60 p-3 rounded-xl border border-cyber-cyan/20">
+                    <span class="text-cyber-gold font-bold text-base">2.</span>
+                    <p><strong>เครื่องมือช่วยคิด:</strong> แตะที่การ์ดเบาะแสเพื่อ 📌 ปักหมุด หรือ ❌ ตัดทิ้ง ใช้ตาราง Matrix เพื่อจับคู่เปรียบเทียบข้อมูล</p>
+                </div>
+                <div class="flex items-start gap-3 bg-cyber-dark/60 p-3 rounded-xl border border-cyber-cyan/20">
+                    <span class="text-cyber-pink font-bold text-base">3.</span>
+                    <p><strong>ตัดสินคดี:</strong> เลือกคำตอบสรุปผลตามความจริงที่พิสูจน์ได้ ห้ามเดา! เพราะคำตอบผิดจะเสียหัวใจ ❤️</p>
+                </div>
+                <div class="flex items-start gap-3 bg-cyber-dark/60 p-3 rounded-xl border border-cyber-cyan/20">
+                    <span class="text-cyber-purple font-bold text-base">4.</span>
+                    <p><strong>คำใบ้และเวลา:</strong> สามารถขอคำใบ้ Hint ได้ แต่จะถูกหักคะแนนโบนัสเมื่อจบคดี</p>
+                </div>
+            </div>
+
+            <button onclick="game.closeModals()" class="glass-button glass-button-primary w-full py-2.5 rounded-xl font-bold text-xs text-white">
+                เข้าใจแล้ว พร้อมสืบสวน!
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal 2: Settings -->
+    <div id="modal-settings" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="glass-panel p-6 rounded-3xl max-w-sm w-full border-cyber-purple/50 space-y-4 animate-pop-in">
+            <div class="flex items-center justify-between border-b border-cyber-purple/20 pb-3">
+                <h3 class="text-lg font-bold text-cyber-purple flex items-center gap-2">
+                    <i class="fa-solid fa-sliders"></i> ตั้งค่าระบบ (SETTINGS)
+                </h3>
+                <button onclick="game.closeModals()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <div class="space-y-4 text-xs md:text-sm text-gray-200">
+                <div class="flex items-center justify-between">
+                    <span>เสียงเอฟเฟกต์ (SFX Audio)</span>
+                    <button id="btn-toggle-sfx" onclick="game.toggleSFX()" class="glass-button px-4 py-1.5 rounded-xl text-cyber-cyan font-bold">
+                        ON
+                    </button>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span>ล้างข้อมูลการเล่นทั้งหมด</span>
+                    <button onclick="game.resetProgress()" class="bg-red-500/20 border border-red-500 text-red-400 px-3 py-1.5 rounded-xl font-bold hover:bg-red-500 hover:text-white">
+                        RESET DATA
+                    </button>
+                </div>
+            </div>
+
+            <button onclick="game.closeModals()" class="glass-button w-full py-2.5 rounded-xl font-bold text-xs text-white">
+                ปิดหน้าต่าง
+            </button>
+        </div>
+    </div>
+
+    <!-- ==================== JAVASCRIPT GAME ENGINE ==================== -->
+    <script>
+        /**
+         * DATA DETECTIVE — GAME ENGINE & DATA ARCHIVE
+         * Grade 2 Computing Science Educational Web App
+         */
+
+        // ================= AUDIO SYNTHESIZER (Web Audio API) =================
+        class SoundEngine {
+            constructor() {
+                this.ctx = null;
+                this.enabled = true;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
+
+            play(type) {
+                if (!this.enabled) return;
+                try {
+                    this.init();
+                    if (this.ctx.state === 'suspended') {
+                        this.ctx.resume();
+                    }
+                    const now = this.ctx.currentTime;
+
+                    if (type === 'click') {
+                        const osc = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(800, now);
+                        osc.frequency.exponentialRampToValueAtTime(400, now + 0.04);
+                        gain.gain.setValueAtTime(0.15, now);
+                        gain.gain.linearRampToValueAtTime(0.01, now + 0.04);
+                        osc.connect(gain);
+                        gain.connect(this.ctx.destination);
+                        osc.start(now);
+                        osc.stop(now + 0.04);
+                    } else if (type === 'correct') {
+                        const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                        notes.forEach((freq, idx) => {
+                            const osc = this.ctx.createOscillator();
+                            const gain = this.ctx.createGain();
+                            osc.type = 'triangle';
+                            osc.frequency.setValueAtTime(freq, now + idx * 0.07);
+                            gain.gain.setValueAtTime(0.2, now + idx * 0.07);
+                            gain.gain.linearRampToValueAtTime(0.01, now + idx * 0.07 + 0.2);
+                            osc.connect(gain);
+                            gain.connect(this.ctx.destination);
+                            osc.start(now + idx * 0.07);
+                            osc.stop(now + idx * 0.07 + 0.2);
+                        });
+                    } else if (type === 'wrong') {
+                        const osc = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+                        osc.type = 'sawtooth';
+                        osc.frequency.setValueAtTime(220, now);
+                        osc.frequency.setValueAtTime(160, now + 0.1);
+                        gain.gain.setValueAtTime(0.25, now);
+                        gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+                        osc.connect(gain);
+                        gain.connect(this.ctx.destination);
+                        osc.start(now);
+                        osc.stop(now + 0.25);
+                    } else if (type === 'win') {
+                        const chord = [440, 554.37, 659.25, 880];
+                        chord.forEach(freq => {
+                            const osc = this.ctx.createOscillator();
+                            const gain = this.ctx.createGain();
+                            osc.type = 'sine';
+                            osc.frequency.setValueAtTime(freq, now);
+                            gain.gain.setValueAtTime(0.2, now);
+                            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+                            osc.connect(gain);
+                            gain.connect(this.ctx.destination);
+                            osc.start(now);
+                            osc.stop(now + 0.8);
+                        });
+                    }
+                } catch (e) {
+                    console.log('Audio playback context prevented:', e);
+                }
+            }
+        }
+
+        const soundFX = new SoundEngine();
+
+        // ================= DATA ARCHIVE DATABASE (10 CASES) =================
+        const CASES_DATABASE = [
+            {
+                id: 1,
+                title: "แล็ปท็อปที่หายไป (Missing Laptop)",
+                difficulty: "EASY",
+                timeLimit: 300,
+                desc: "แล็ปท็อปประจำห้องเรียนคอมพิวเตอร์ถูกสลับตำแหน่ง นักเรียน 4 คน (นนท์, มิน, ฟ้า, เจมส์) ใช้งานแล็ปท็อปคนละเครื่อง (A, B, C, D) คุณต้องใช้ตรรกะระบุให้ได้ว่าใครใช้เครื่องไหน",
+                clues: [
+                    "มินไม่ได้ใช้แล็ปท็อปเครื่อง A",
+                    "คนที่ใช้แล็ปท็อปเครื่อง C อยู่ห้องเรียน 3",
+                    "เจมส์ระบุชัดเจนว่าเขาใช้แล็ปท็อปเครื่อง D",
+                    "ฟ้าไม่ได้อยู่ห้องเรียน 3",
+                    "นนท์ยืนยันว่าเขาไม่ได้ใช้แล็ปท็อปเครื่อง B"
+                ],
+                matrixRows: ["นนท์", "มิน", "ฟ้า", "เจมส์"],
+                matrixCols: ["เครื่อง A", "เครื่อง B", "เครื่อง C", "เครื่อง D"],
+                verdictType: "single_select",
+                question: "ใครเป็นคนใช้งานแล็ปท็อปเครื่อง A ?",
+                options: ["นนท์", "มิน", "ฟ้า", "เจมส์"],
+                correctAnswer: "ฟ้า",
+                hints: [
+                    "ลองดูข้อมูลของเจมส์ก่อน เพื่อตัดเครื่อง D ออกจากคนอื่น",
+                    "คนที่อยู่ห้อง 3 ใช้เครื่อง C และฟ้าไม่ได้อยู่ห้อง 3 แปลว่าฟ้าไม่ได้ใช้เครื่อง C",
+                    "ตัดตัวเลือกเครื่อง B ออกจากนนท์ และตัดเครื่อง A ออกจากมิน"
+                ],
+                lesson: "การวิเคราะห์ตรรกะแบบตารางตัดตัวเลือก (Elimination Matrix) ช่วยให้เราเชื่อมโยงความสัมพันธ์และหาความจริงจากเบาะแสที่ไม่สมบูรณ์ได้อย่างแม่นยำ"
+            },
+            {
+                id: 2,
+                title: "สัตว์เลี้ยงปริศนา (Mystery Pet)",
+                difficulty: "EASY",
+                timeLimit: 270,
+                desc: "เจ้าหน้าที่พบรูปสัตว์เลี้ยง 4 ตัว (สุนัข, แมว, นก, นกแก้ว/กระต่าย) ของเพื่อน 4 คน (ก้อง, ปาย, เมย์, ต้า) โดยมีข้อมูลลงทะเบียนกระจัดกระจายอยู่ในฐานข้อมูล",
+                clues: [
+                    "ก้องแพ้ขนสัตว์ จึงเลี้ยงสัตว์มีขนไม่ได้เลย (เลี้ยงนก)",
+                    "ปายไม่ได้เลี้ยงสุนัขและไม่ได้เลี้ยงแมว",
+                    "เมย์เลี้ยงสัตว์สี่ขาที่ชอบไล่จับหนู",
+                    "ต้านำสัตว์เลี้ยงมาฉีดวัคซีนสุนัขบ้าทุกปี"
+                ],
+                matrixRows: ["ก้อง", "ปาย", "เมย์", "ต้า"],
+                matrixCols: ["สุนัข", "แมว", "นก", "กระต่าย"],
+                verdictType: "single_select",
+                question: "สัตว์เลี้ยงของ 'ปาย' คือสัตว์ชนิดใด?",
+                options: ["สุนัข", "แมว", "นก", "กระต่าย"],
+                correctAnswer: "กระต่าย",
+                hints: [
+                    "ก้องเลี้ยงนก ตัดนกออกจากคนอื่น",
+                    "เมย์เลี้ยงแมว (ชอบจับหนู) และต้าเลี้ยงสุนัข (ฉีดวัคซีนสุนัขบ้า)",
+                    "เหลือกระต่ายให้ปาย"
+                ],
+                lesson: "การจัดหมวดหมู่ข้อมูลตามคุณลักษณะ (Categorization) เช่น สัตว์มีขน/ไม่มีขน สัตว์สี่ขา ช่วยให้ตัดความเป็นไปได้ที่ไม่เกี่ยวข้องออกได้อย่างรวดเร็ว"
+            },
+            {
+                id: 3,
+                title: "รหัสลับห้องเก็บของ (Secret Message)",
+                difficulty: "EASY",
+                timeLimit: 240,
+                desc: "นักสืบพบรหัสผ่านตัวเลข 4 หลักบนเซิร์ฟเวอร์ย่อย เบาะแสเงื่อนไขถูกบันทึกไว้ในบันทึกความจำของเจ้าหน้าที่",
+                clues: [
+                    "ตัวเลขหลักแรกเป็นเลขคี่ที่มากกว่า 5 แต่ไม่ใช่เลข 9",
+                    "ตัวเลขหลักที่สองเท่ากับ (หลักแรก - 3)",
+                    "ตัวเลขหลักที่สามเป็นผลบวกของหลักแรกและหลักที่สอง",
+                    "ตัวเลขหลักสุดท้ายคือ 0"
+                ],
+                verdictType: "single_select",
+                question: "รหัสผ่านปลดล็อกเซิร์ฟเวอร์ 4 หลักคือตัวเลขใด?",
+                options: ["7410", "7400", "7411", "9610"],
+                correctAnswer: "7410",
+                hints: [
+                    "เลขคี่มากกว่า 5 และไม่ใช่ 9 คือเลข 7",
+                    "หลักที่สอง: 7 - 3 = 4",
+                    "หลักที่สาม: 7 + 4 = 11 แต่ในรหัส 4 หลัก ให้ดูตัวเลือกที่มีหลักสองเป็น 4 และหลักแรกเป็น 7"
+                ],
+                lesson: "การประมวลผลข้อมูลตามลำดับเงื่อนไข (Conditional Processing) ช่วยเปลี่ยนข้อมูลดิบให้กลายเป็นสารสนเทศที่มีความหมาย"
+            },
+            {
+                id: 4,
+                title: "นักเรียนที่หายตัวไป (The Missing Student)",
+                difficulty: "MEDIUM",
+                timeLimit: 240,
+                desc: "นักเรียนคนหนึ่งไม่ได้มาเช็กชื่อในคาบเรียนบ่าย มีบันทึกกล้องวงจรปิดและเวลาเข้าออกประตูโรงเรียนบันทึกไว้",
+                clues: [
+                    "เวลา 12:10 น. มีคนเห็นนักเรียนอยู่ที่ชมรมหุ่นยนต์",
+                    "กล้องวงจรปิดหน้าประตูโรงเรียนไม่พบการเดินออกนอกประตู",
+                    "เวลา 12:30 น. มีการสแกนบัตรเข้าห้องซ้อมดนตรีชั้น 3",
+                    "เพื่อนนักเรียนระบุว่าห้องซ้อมดนตรีล็อกจากด้านใน"
+                ],
+                verdictType: "single_select",
+                question: "จากข้อมูลที่มี นักเรียนคนนี้น่าจะอยู่ที่สถานที่ใดในปัจจุบัน?",
+                options: ["นอกโรงเรียน", "ชมรมหุ่นยนต์", "ห้องซ้อมดนตรีชั้น 3", "โรงอาหาร"],
+                correctAnswer: "ห้องซ้อมดนตรีชั้น 3",
+                hints: [
+                    "ตัด 'นอกโรงเรียน' ออกเพราะกล้องวงจรปิดไม่พบการออกประตู",
+                    "ดูลำดับเวลาล่าสุด (Timeline Analysis) 12:30 น. มีการสแกนบัตรเข้าห้องดนตรี"
+                ],
+                lesson: "การวิเคราะห์ข้อมูลตามอนุกรมเวลา (Time-Series / Timeline Analysis) ช่วยให้เห็นลำดับเหตุการณ์และระบุตำแหน่งปัจจุบันได้อย่างมีเหตุผล"
+            },
+            {
+                id: 5,
+                title: "การทุจริตข้อมูลสถิติ (Data Fraud)",
+                difficulty: "MEDIUM",
+                timeLimit: 240,
+                desc: "มีการบันทึกคะแนนสอบวิชาคณิตศาสตร์ผิดปกติในระบบ ในไฟล์คะแนนมีการแก้ไขตัวเลขที่ไม่สอดคล้องกับความเป็นจริง",
+                clues: [
+                    "คะแนนเต็มของแบบทดสอบคือ 50 คะแนน",
+                    "นักเรียนในห้องมีทั้งหมด 30 คน",
+                    "ข้อมูลคะแนนรายบุคคล: 45, 42, 38, 55, 40, 48...",
+                    "ค่าเฉลี่ยคะแนนคำนวณได้ 52 คะแนน"
+                ],
+                verdictType: "single_select",
+                question: "ข้อมูลส่วนใดในระบบที่ผิดปกติและเป็นหลักฐานการทุจริต/ข้อผิดพลาด?",
+                options: [
+                    "จำนวนนักเรียน 30 คน",
+                    "คะแนนสอบ 55 คะแนน (เกินคะแนนเต็ม)",
+                    "คะแนนสอบ 38 คะแนน",
+                    "แบบทดสอบ 50 คะแนน"
+                ],
+                correctAnswer: "คะแนนสอบ 55 คะแนน (เกินคะแนนเต็ม)",
+                hints: [
+                    "ตรวจสอบขอบเขตความถูกต้องของข้อมูล (Data Validation Range)",
+                    "คะแนนเต็ม 50 แต่มีค่า 55 ซึ่งเกินความเป็นจริง"
+                ],
+                lesson: "การตรวจสอบความสมเหตุสมผลของข้อมูล (Data Validation & Outlier Detection) เป็นขั้นตอนสำคัญในการทำความสะอาดข้อมูล (Data Cleaning)"
+            },
+            {
+                id: 6,
+                title: "เงาในเครือข่าย (Cyber Mystery)",
+                difficulty: "MEDIUM",
+                timeLimit: 210,
+                desc: "เครื่องคอมพิวเตอร์ในห้องปฏิบัติการถูกแฮก มีไฟล์ล็อกบันทึก IP Address ที่เข้าใช้งานระบบในช่วงเวลาเกิดเหตุ",
+                clues: [
+                    "เครื่องที่ถูกแฮกเปิดใช้งานเวลา 14:00 - 15:00 น.",
+                    "IP: 192.168.1.15 เข้าใช้งานเวลา 13:30 น. (ปกติ)",
+                    "IP: 192.168.1.88 เข้าใช้งานเวลา 14:15 น. และดาวน์โหลดไฟล์ขนาดใหญ่",
+                    "IP: 192.168.1.88 ไม่ใช่ IP ของเจ้าหน้าที่ในระบบ"
+                ],
+                verdictType: "single_select",
+                question: "IP Address ใดเป็นผู้สงสัยหลักในการเข้าถึงระบบโดยมิได้รับอนุญาต?",
+                options: ["192.168.1.15", "192.168.1.88", "127.0.0.1", "192.168.1.1"],
+                correctAnswer: "192.168.1.88",
+                hints: [
+                    "ตรวจสอบช่วงเวลาเกิดเหตุ (14:00 - 15:00 น.)",
+                    "IP 192.168.1.88 เข้ามาตอน 14:15 น. และไม่ใช่ IP ของเจ้าหน้าที่"
+                ],
+                lesson: "การกรองข้อมูล (Data Filtering) ตามเงื่อนไขเวลาและความผิดปกติของสิทธิ์ใช้งาน ช่วยจำกัดขอบเขตการสืบสวนคดีไซเบอร์"
+            },
+            {
+                id: 7,
+                title: "ข่าวปลอมในชุมชน (Fake Information)",
+                difficulty: "HARD",
+                timeLimit: 240,
+                desc: "มีการแพร่กระจายข่าวลือว่า 'น้ำประปาในเมืองมีสารพิษ ห้ามใช้ 3 วัน' สร้างความตื่นตระหนก นักสืบต้องตรวจสอบแหล่งที่มาของข้อมูล",
+                clues: [
+                    "แหล่งที่มา A: โพสต์จากเว็บบอร์ด anonymous_user99 ไม่มีเอกสารอ้างอิง",
+                    "แหล่งที่มา B: ประกาศอย่างเป็นทางการจากการประปานครหลวง ยืนยันน้ำสะอาดผ่านมาตรฐาน",
+                    "แหล่งที่มา C: ข้อความแชร์ในไลน์กลุ่มที่ไม่มีการระบุวันที่แน่ชัด",
+                    "แหล่งที่มา D: บล็อกเกอร์ขายน้ำดื่มบรรจุขวดโพสต์เตือนให้รีบซื้อน้ำตุน"
+                ],
+                verdictType: "single_select",
+                question: "ข้อมูลแหล่งใดที่มีความน่าเชื่อถือสูงที่สุด และควรใช้อ้างอิงความจริง?",
+                options: ["แหล่งที่มา A", "แหล่งที่มา B", "แหล่งที่มา C", "แหล่งที่มา D"],
+                correctAnswer: "แหล่งที่มา B",
+                hints: [
+                    "ประเมินความน่าเชื่อถือของแหล่งข้อมูล (Source Reliability)",
+                    "การประปานครหลวงเป็นหน่วยงานรับผิดชอบโดยตรง มีมาตรฐานรองรับ"
+                ],
+                lesson: "การประเมินความน่าเชื่อถือของข้อมูล (Information Evaluation) ต้องพิจารณาจากเจ้าของข้อมูล ผลประโยชน์แอบแฝง และหลักฐานอ้างอิง"
+            },
+            {
+                id: 8,
+                title: "รูปแบบที่ซ่อนอยู่ (Hidden Pattern)",
+                difficulty: "HARD",
+                timeLimit: 210,
+                desc: "แฮกเกอร์ทิ้งชุดอนุกรมข้อมูลไว้เพื่อใช้เป็นรหัสกู้คืนระบบ คุณต้องค้นหารูปแบบแพตเทิร์นของข้อมูลเพื่อหาตัวเลขถัดไป",
+                clues: [
+                    "ชุดข้อมูลที่พบ: 3, 6, 12, 24, 48, ?",
+                    "จากการวิเคราะห์: 3 x 2 = 6",
+                    "6 x 2 = 12",
+                    "12 x 2 = 24, 24 x 2 = 48"
+                ],
+                verdictType: "single_select",
+                question: "ตัวเลขถัดไปในชุดข้อมูลรหัสกู้คืนระบบคือตัวเลขใด?",
+                options: ["60", "72", "96", "100"],
+                correctAnswer: "96",
+                hints: [
+                    "สังเกตรูปแบบการคูณสะสม (Exponential Pattern)",
+                    "นำ 48 คูณด้วย 2"
+                ],
+                lesson: "การจดจำและค้นหารูปแบบ (Pattern Recognition) เป็นหนึ่งในทักษะพื้นฐานของการคิดเชิงคำนวณ (Computational Thinking)"
+            },
+            {
+                id: 9,
+                title: "ขโมยดิจิทัล (Digital Thief)",
+                difficulty: "HARD",
+                timeLimit: 240,
+                desc: "คนร้ายแอบขโมยข้อมูลการเงินจากเซิร์ฟเวอร์บริษัท มีข้อมูลผู้ต้องสงสัย 3 ราย พร้อมบันทึกเวลาเปิดใช้งานตู้เซฟดิจิทัล",
+                clues: [
+                    "ตู้เซฟถูกเปิดด้วยรหัสผ่านเวลา 18:30 น.",
+                    "นาย A อยู่ที่ร้านกาแฟนอกบริษัท มีใบเสร็จรับเงินเวลา 18:25 น.",
+                    "นาย B สแกนนิ้วมือออกจากบริษัทเวลา 18:00 น.",
+                    "นาย C มีบันทึกสแกนบัตรเข้าห้องเซิร์ฟเวอร์เวลา 18:20 น. และไม่มีบันทึกออก"
+                ],
+                verdictType: "single_select",
+                question: "ผู้ต้องสงสัยรายใดเป็นขโมยดิจิทัลตามหลักฐานเชิงเวลาและสถานที่?",
+                options: ["นาย A", "นาย B", "นาย C", "ไม่สามารถระบุได้"],
+                correctAnswer: "นาย C",
+                hints: [
+                    "เชื่อมโยงข้อมูลเวลา (Time) และสถานที่ (Location)",
+                    "นาย C อยู่ในห้องเซิร์ฟเวอร์เวลา 18:20 น. ก่อนเซฟถูกเปิดตอน 18:30 น."
+                ],
+                lesson: "การเชื่อมโยงข้อมูลหลายมิติ (Multi-dimensional Data Fusion) ช่วยให้สร้างภาพรวมของเหตุการณ์และชี้ตัวผู้กระทำผิดได้อย่างสมบูรณ์"
+            },
+            {
+                id: 10,
+                title: "🔥 THE FINAL CASE — คดีสุดท้าย: วิกฤตการณ์ข้อมูลเมืองไซเบอร์",
+                difficulty: "FINAL",
+                timeLimit: 360,
+                desc: "เกิดเหตุการณ์ข้อมูลจราจรและพลังงานของเมืองถูกป่วนกะทันหัน คุณต้องนำทักษะการวิเคราะห์ จัดหมวดหมู่ ตรวจสอบความน่าเชื่อถือ และเชื่อมโยงข้อมูลทั้งหมดมาไขคดีใหญ่ที่สุด!",
+                clues: [
+                    "การป่วนเกิดขึ้นที่โหนดศูนย์กลาง Node-X เวลา 20:00 น.",
+                    "บันทึกรหัสผ่านเปลี่ยนล่าสุดโดยรหัสเจ้าหน้าที่ Tech-04",
+                    "ผู้ถือครองรหัส Tech-04 คือ 'วิศวกรธีรเดช'",
+                    "ธีรเดชอ้างว่ารหัสผ่านของเขาถูก Phishing เมื่อตอน 15:00 น. จากอีเมลปลอม fake_admin@city.com",
+                    "พบ IP ผู้ส่งอีเมล Phishing เชื่อมโยงกับบริษัทคู่แข่ง CyberCorp"
+                ],
+                verdictType: "single_select",
+                question: "ใครหรือองค์กรใดคือผู้อยู่เบื้องหลังการป่วนระบบเมืองไซเบอร์ที่แท้จริง?",
+                options: ["วิศวกรธีรเดช", "แฮกเกอร์ anonymous", "บริษัทคู่แข่ง CyberCorp", "ระบบขัดข้องเอง"],
+                correctAnswer: "บริษัทคู่แข่ง CyberCorp",
+                hints: [
+                    "มองหาต้นตอที่แท้จริงของสาเหตุ (Root Cause Analysis)",
+                    "ธีรเดชเป็นเพียงเหยื่อ Phishing แต่องค์กรเบื้องหลังที่ส่งอีเมลปลอมคือ CyberCorp"
+                ],
+                lesson: "การสืบสวนข้อมูลระดับสูง ต้องมองเหนือกว่าข้อมูลชั้นแรก เพื่อค้นหาต้นตอสาเหตุ (Root Cause) และความเชื่อมโยงของระบบทั้งหมด"
+            }
+        ];
+
+        // ================= ACHIEVEMENTS DEFINITIONS =================
+        const ACHIEVEMENTS_LIST = [
+            { id: 'first_case', title: '🔍 First Case Solved', desc: 'ไขคดีแรกได้สำเร็จ' },
+            { id: 'no_hint', title: '🧠 Pure Detective', desc: 'ผ่านคดีโดยไม่ใช้ Hint เลย' },
+            { id: 'speed_demon', title: '⚡ Speed Detective', desc: 'ไขคดีได้ภายในเวลาน้อยกว่าครึ่งหนึ่ง' },
+            { id: 'perfect_score', title: '⭐ Perfect Analysis', desc: 'ได้ 3 ดาวในคดีใดคดีหนึ่ง' },
+            { id: 'data_master', title: '👑 Data Master', desc: 'ผ่านคดีทั้งหมดครบ 10 คดี' }
+        ];
+
+        // ================= GAME STATE MANAGEMENT =================
+        class GameEngine {
+            constructor() {
+                this.state = {
+                    playerName: 'นักสืบ',
+                    avatarIcon: '🕵️‍♂️',
+                    score: 0,
+                    completedCases: {}, // id: { stars, score, timeSpent }
+                    achievements: [],
+                    sfxEnabled: true,
+
+                    // Current Active Case
+                    currentCase: null,
+                    lives: 3,
+                    timer: 0,
+                    timerInterval: null,
+                    hintsLeft: 3,
+                    pinnedClues: new Set(),
+                    eliminatedClues: new Set(),
+                    matrixState: {} // "row_col": 0 (empty), 1 (match), 2 (cross)
+                };
+
+                this.init();
+            }
+
+            init() {
+                this.loadFromStorage();
+                this.renderHeader();
+                this.renderCasesGrid();
+                this.renderProfile();
+                this.renderLeaderboard();
+                this.initBackgroundCanvas();
+
+                // Sound event listeners on buttons
+                document.querySelectorAll('button').forEach(btn => {
+                    btn.addEventListener('click', () => soundFX.play('click'));
+                });
+            }
+
+            // Save / Load Progress in LocalStorage
+            saveToStorage() {
+                localStorage.setItem('data_detective_save', JSON.stringify({
+                    playerName: this.state.playerName,
+                    avatarIcon: this.state.avatarIcon,
+                    score: this.state.score,
+                    completedCases: this.state.completedCases,
+                    achievements: this.state.achievements,
+                    sfxEnabled: this.state.sfxEnabled
+                }));
+            }
+
+            loadFromStorage() {
+                const saved = localStorage.getItem('data_detective_save');
+                if (saved) {
+                    try {
+                        const parsed = JSON.parse(saved);
+                        this.state.playerName = parsed.playerName || 'นักสืบ';
+                        this.state.avatarIcon = parsed.avatarIcon || '🕵️‍♂️';
+                        this.state.score = parsed.score || 0;
+                        this.state.completedCases = parsed.completedCases || {};
+                        this.state.achievements = parsed.achievements || [];
+                        this.state.sfxEnabled = parsed.sfxEnabled !== undefined ? parsed.sfxEnabled : true;
+                        soundFX.enabled = this.state.sfxEnabled;
+                    } catch (e) {
+                        console.error('Save data parse error:', e);
+                    }
+                }
+            }
+
+            resetProgress() {
+                if (confirm("คุณแน่ใจหรือไม่ว่าต้องการล้างข้อมูลการเล่นทั้งหมด?")) {
+                    localStorage.removeItem('data_detective_save');
+                    location.reload();
+                }
+            }
+
+            // Rank calculation based on total score
+            getRankTitle() {
+                const score = this.state.score;
+                if (score >= 4500) return { title: 'Data Master', icon: '👑' };
+                if (score >= 3000) return { title: 'Master Detective', icon: '🧠' };
+                if (score >= 1800) return { title: 'Detective', icon: '🕵️' };
+                if (score >= 800) return { title: 'Investigator', icon: '🔎' };
+                return { title: 'Rookie', icon: '🔰' };
+            }
+
+            // Screen Navigation Handler
+            showScreen(screenId) {
+                const screens = ['home', 'cases', 'gameplay', 'feedback', 'profile', 'leaderboard'];
+                screens.forEach(s => {
+                    const el = document.getElementById(`screen-${s}`);
+                    if (el) {
+                        if (s === screenId) {
+                            el.classList.remove('hidden');
+                        } else {
+                            el.classList.add('hidden');
+                        }
+                    }
+                });
+
+                if (screenId === 'cases') this.renderCasesGrid();
+                if (screenId === 'profile') this.renderProfile();
+                if (screenId === 'leaderboard') this.renderLeaderboard();
+                if (screenId === 'home') this.updateHomeStats();
+
+                this.renderHeader();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+
+            renderHeader() {
+                const rank = this.getRankTitle();
+                document.getElementById('hdr-rank-icon').textContent = rank.icon;
+                document.getElementById('hdr-rank-title').textContent = rank.title;
+                document.getElementById('hdr-score').textContent = this.state.score;
+                document.getElementById('hdr-player-name').textContent = this.state.playerName;
+            }
+
+            updateHomeStats() {
+                const completedCount = Object.keys(this.state.completedCases).length;
+                let totalStars = 0;
+                Object.values(this.state.completedCases).forEach(c => totalStars += (c.stars || 0));
+
+                document.getElementById('home-stat-completed').textContent = `${completedCount} / 10`;
+                document.getElementById('home-stat-stars').textContent = `${totalStars} ⭐`;
+                document.getElementById('home-stat-rank').textContent = this.getRankTitle().title;
+            }
+
+            // Render Cases Grid Page
+            renderCasesGrid() {
+                const container = document.getElementById('cases-grid');
+                if (!container) return;
+
+                container.innerHTML = '';
+                const completedCount = Object.keys(this.state.completedCases).length;
+
+                CASES_DATABASE.forEach((c, idx) => {
+                    // Lock logic: Case 1 is open. Case 10 requires 9 completed. Others unlock sequentially.
+                    let isUnlocked = false;
+                    if (idx === 0) isUnlocked = true;
+                    else if (c.id === 10) isUnlocked = completedCount >= 9;
+                    else isUnlocked = !!this.state.completedCases[c.id - 1] || idx <= completedCount;
+
+                    const caseData = this.state.completedCases[c.id];
+                    const card = document.createElement('div');
+
+                    if (isUnlocked) {
+                        card.className = `glass-panel p-5 rounded-2xl flex flex-col justify-between space-y-4 cursor-pointer hover:border-cyber-cyan transition-all hover:-translate-y-1 ${c.id === 10 ? 'border-cyber-pink shadow-[0_0_20px_rgba(255,0,127,0.3)]' : ''}`;
+                        card.onclick = () => this.startCase(c.id);
+
+                        const stars = caseData ? '⭐'.repeat(caseData.stars) : '☆☆☆';
+
+                        card.innerHTML = `
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[10px] font-extrabold ${c.id === 10 ? 'text-cyber-pink' : 'text-cyber-cyan'} uppercase tracking-wider">
+                                        CASE #${String(c.id).padStart(2, '0')}
+                                    </span>
+                                    <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full ${c.difficulty === 'EASY' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : c.difficulty === 'MEDIUM' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'}">
+                                        ${c.difficulty}
+                                    </span>
+                                </div>
+                                <h3 class="text-base font-bold text-white leading-snug">${c.title}</h3>
+                                <p class="text-xs text-gray-300 line-clamp-2">${c.desc}</p>
+                            </div>
+
+                            <div class="pt-3 border-t border-cyber-cyan/10 flex items-center justify-between text-xs">
+                                <div class="text-cyber-gold">${stars}</div>
+                                <div class="text-gray-400 font-semibold">
+                                    ${caseData ? `High: <span class="text-cyber-cyan">${caseData.score}</span> pts` : '<span class="text-cyber-cyan">ยังไม่ได้สืบ</span>'}
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        card.className = `glass-panel p-5 rounded-2xl flex flex-col justify-between space-y-4 opacity-50 grayscale border-gray-700 pointer-events-none`;
+                        card.innerHTML = `
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[10px] font-extrabold text-gray-500 uppercase tracking-wider">CASE #${String(c.id).padStart(2, '0')}</span>
+                                    <i class="fa-solid fa-lock text-gray-400 text-sm"></i>
+                                </div>
+                                <h3 class="text-base font-bold text-gray-400">${c.title}</h3>
+                                <p class="text-xs text-gray-500">ผ่านคดีก่อนหน้าเพื่อปลดล็อก...</p>
+                            </div>
+                            <div class="pt-3 border-t border-gray-800 text-[11px] text-gray-500">
+                                🔒 LOCKED
+                            </div>
+                        `;
+                    }
+
+                    container.appendChild(card);
+                });
+            }
+
+            // START CASE GAMEPLAY
+            startCase(caseId) {
+                const c = CASES_DATABASE.find(x => x.id === caseId);
+                if (!c) return;
+
+                this.state.currentCase = c;
+                this.state.lives = 3;
+                this.state.timer = c.timeLimit;
+                this.state.hintsLeft = 3;
+                this.state.pinnedClues.clear();
+                this.state.eliminatedClues.clear();
+                this.state.matrixState = {};
+
+                // Setup Gameplay UI
+                document.getElementById('game-case-id').textContent = `CASE #${String(c.id).padStart(2, '0')}`;
+                document.getElementById('game-case-title').textContent = c.title;
+                document.getElementById('game-case-desc').textContent = c.desc;
+                document.getElementById('case-difficulty-badge').textContent = c.difficulty;
+                document.getElementById('hint-count-display').textContent = this.state.hintsLeft;
+
+                this.renderLives();
+                this.renderClues();
+                this.renderMatrixGrid();
+                this.renderVerdictOptions();
+                this.startTimer();
+
+                this.showScreen('gameplay');
+            }
+
+            startTimer() {
+                clearInterval(this.state.timerInterval);
+                this.updateTimerDisplay();
+
+                this.state.timerInterval = setInterval(() => {
+                    this.state.timer--;
+                    this.updateTimerDisplay();
+
+                    if (this.state.timer <= 0) {
+                        clearInterval(this.state.timerInterval);
+                        soundFX.play('wrong');
+                        alert("⏱️ หมดเวลาสืบสวน! คุณถูกส่งกลับหน้าคลังคดี");
+                        this.showScreen('cases');
+                    }
+                }, 1000);
+            }
+
+            updateTimerDisplay() {
+                const mins = Math.floor(this.state.timer / 60);
+                const secs = this.state.timer % 60;
+                const timeStr = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                const timerEl = document.getElementById('game-timer');
+                const boxEl = document.getElementById('game-timer-box');
+
+                timerEl.textContent = timeStr;
+
+                if (this.state.timer <= 30) {
+                    boxEl.classList.add('border-red-500', 'bg-red-500/20', 'animate-pulse');
+                    timerEl.classList.replace('text-cyber-cyan', 'text-red-400');
+                } else {
+                    boxEl.classList.remove('border-red-500', 'bg-red-500/20', 'animate-pulse');
+                    timerEl.classList.replace('text-red-400', 'text-cyber-cyan');
+                }
+            }
+
+            renderLives() {
+                const container = document.getElementById('game-lives');
+                container.innerHTML = '';
+                for (let i = 0; i < 3; i++) {
+                    if (i < this.state.lives) {
+                        container.innerHTML += `<i class="fa-solid fa-heart text-red-500 text-sm"></i>`;
+                    } else {
+                        container.innerHTML += `<i class="fa-regular fa-heart text-gray-600 text-sm"></i>`;
+                    }
+                }
+            }
+
+            // Render Clues List & Pin/Eliminate Handlers
+            renderClues() {
+                const container = document.getElementById('clues-container');
+                container.innerHTML = '';
+
+                this.state.currentCase.clues.forEach((clueText, idx) => {
+                    const isPinned = this.state.pinnedClues.has(idx);
+                    const isEliminated = this.state.eliminatedClues.has(idx);
+
+                    const item = document.createElement('div');
+                    item.className = `clue-card glass-panel p-3 rounded-xl flex items-center justify-between gap-3 text-xs md:text-sm ${isPinned ? 'pinned' : ''} ${isEliminated ? 'eliminated' : ''}`;
+
+                    item.innerHTML = `
+                        <div class="flex items-start gap-2 flex-1">
+                            <span class="font-bold text-cyber-cyan text-xs mt-0.5">#${idx + 1}</span>
+                            <span class="text-gray-200 leading-snug">${clueText}</span>
+                        </div>
+                        <div class="flex items-center gap-1 shrink-0">
+                            <button onclick="game.togglePinClue(${idx})" class="p-1.5 rounded-lg border border-yellow-500/40 text-yellow-400 hover:bg-yellow-500/20 text-xs" title="ปักหมุดข้อมูล">
+                                📌
+                            </button>
+                            <button onclick="game.toggleEliminateClue(${idx})" class="p-1.5 rounded-lg border border-red-500/40 text-red-400 hover:bg-red-500/20 text-xs" title="ตัดข้อมูลออก">
+                                ❌
+                            </button>
+                        </div>
+                    `;
+                    container.appendChild(item);
+                });
+            }
+
+            togglePinClue(idx) {
+                soundFX.play('click');
+                if (this.state.pinnedClues.has(idx)) {
+                    this.state.pinnedClues.delete(idx);
+                } else {
+                    this.state.pinnedClues.add(idx);
+                    this.state.eliminatedClues.delete(idx);
+                }
+                this.renderClues();
+            }
+
+            toggleEliminateClue(idx) {
+                soundFX.play('click');
+                if (this.state.eliminatedClues.has(idx)) {
+                    this.state.eliminatedClues.delete(idx);
+                } else {
+                    this.state.eliminatedClues.add(idx);
+                    this.state.pinnedClues.delete(idx);
+                }
+                this.renderClues();
+            }
+
+            // Deduction Matrix Grid Generator
+            renderMatrixGrid() {
+                const container = document.getElementById('deduction-matrix-container');
+                const c = this.state.currentCase;
+
+                if (!c.matrixRows || !c.matrixCols) {
+                    container.innerHTML = `<p class="text-xs text-gray-500 italic">คดีนี้เน้นการวิเคราะห์เชิงอนุกรมเวลา/โครงสร้าง ไม่มีตาราง Matrix</p>`;
+                    return;
+                }
+
+                let html = `<table class="w-full text-center text-xs border-collapse"><thead><tr><th class="p-1.5 border border-cyber-cyan/20 bg-cyber-dark text-gray-400"></th>`;
+                c.matrixCols.forEach(col => {
+                    html += `<th class="p-1.5 border border-cyber-cyan/20 bg-cyber-dark text-cyber-cyan font-bold">${col}</th>`;
+                });
+                html += `</tr></thead><tbody>`;
+
+                c.matrixRows.forEach((row, rIdx) => {
+                    html += `<tr><td class="p-1.5 border border-cyber-cyan/20 bg-cyber-dark text-cyber-pink font-bold text-left">${row}</td>`;
+                    c.matrixCols.forEach((col, cIdx) => {
+                        const key = `${rIdx}_${cIdx}`;
+                        const val = this.state.matrixState[key] || 0; // 0=none, 1=match, 2=cross
+                        let cellContent = '-';
+                        let cellClass = '';
+
+                        if (val === 1) { cellContent = '✔️'; cellClass = 'state-match'; }
+                        else if (val === 2) { cellContent = '❌'; cellClass = 'state-cross'; }
+
+                        html += `<td class="p-2 border border-cyber-cyan/20 bg-cyber-dark/60 cursor-pointer deduction-cell ${cellClass}" onclick="game.cycleMatrixCell('${key}')">${cellContent}</td>`;
+                    });
+                    html += `</tr>`;
+                });
+
+                html += `</tbody></table>`;
+                container.innerHTML = html;
+            }
+
+            cycleMatrixCell(key) {
+                soundFX.play('click');
+                const cur = this.state.matrixState[key] || 0;
+                this.state.matrixState[key] = (cur + 1) % 3;
+                this.renderMatrixGrid();
+            }
+
+            resetMatrixGrid() {
+                soundFX.play('click');
+                this.state.matrixState = {};
+                this.renderMatrixGrid();
+            }
+
+            // Render Verdict / Answer Input Area
+            renderVerdictOptions() {
+                const container = document.getElementById('verdict-options-container');
+                const c = this.state.currentCase;
+
+                document.getElementById('verdict-question-title').textContent = c.question;
+                container.innerHTML = '';
+
+                c.options.forEach((opt, idx) => {
+                    const label = document.createElement('label');
+                    label.className = `glass-button p-3 rounded-xl flex items-center gap-3 cursor-pointer text-xs md:text-sm text-gray-200 hover:text-white block`;
+                    label.innerHTML = `
+                        <input type="radio" name="case-verdict" value="${opt}" class="accent-cyber-cyan w-4 h-4">
+                        <span>${opt}</span>
+                    `;
+                    container.appendChild(label);
+                });
+            }
+
+            // HINT SYSTEM
+            triggerHint() {
+                if (this.state.hintsLeft <= 0) {
+                    alert("คุณใช้คำใบ้หมดแล้วสำหรับคดีนี้!");
+                    return;
+                }
+
+                soundFX.play('click');
+                const c = this.state.currentCase;
+                const hintIndex = 3 - this.state.hintsLeft;
+                const hintMsg = c.hints[hintIndex] || c.hints[c.hints.length - 1];
+
+                this.state.hintsLeft--;
+                document.getElementById('hint-count-display').textContent = this.state.hintsLeft;
+
+                alert(`💡 HINT (${3 - this.state.hintsLeft}/3):\n${hintMsg}`);
+            }
+
+            // SUBMIT SOLUTION
+            submitCaseSolution() {
+                const selected = document.querySelector('input[name="case-verdict"]:checked');
+                if (!selected) {
+                    alert("กรุณาเลือกคำตอบตัดสินคดีก่อนส่ง!");
+                    return;
+                }
+
+                const answer = selected.value;
+                const c = this.state.currentCase;
+
+                if (answer === c.correctAnswer) {
+                    // Correct!
+                    clearInterval(this.state.timerInterval);
+                    soundFX.play('win');
+
+                    // Calculate score
+                    const timeSpent = c.timeLimit - this.state.timer;
+                    const baseScore = 500;
+                    const timeBonus = Math.max(0, Math.floor((this.state.timer / c.timeLimit) * 200));
+                    const hintPenalty = (3 - this.state.hintsLeft) * 50;
+                    const finalCaseScore = Math.max(100, baseScore + timeBonus - hintPenalty);
+
+                    // Calculate stars
+                    let stars = 1;
+                    if (this.state.hintsLeft >= 2 && timeSpent < c.timeLimit * 0.6) stars = 3;
+                    else if (this.state.hintsLeft >= 1) stars = 2;
+
+                    // Save Progress
+                    const prevScore = this.state.completedCases[c.id] ? this.state.completedCases[c.id].score : 0;
+                    if (finalCaseScore > prevScore) {
+                        this.state.score += (finalCaseScore - prevScore);
+                    }
+
+                    this.state.completedCases[c.id] = {
+                        stars: Math.max(stars, (this.state.completedCases[c.id]?.stars || 0)),
+                        score: Math.max(finalCaseScore, prevScore),
+                        timeSpent
+                    };
+
+                    this.checkAchievements(timeSpent, stars);
+                    this.saveToStorage();
+
+                    // Render Feedback Screen
+                    this.showFeedbackScreen(c, finalCaseScore, stars, timeSpent);
+                } else {
+                    // Wrong!
+                    soundFX.play('wrong');
+                    this.state.lives--;
+                    this.renderLives();
+
+                    if (this.state.lives <= 0) {
+                        clearInterval(this.state.timerInterval);
+                        alert("❌ หัวใจหมดแล้ว! การวิเคราะห์ผิดพลาด คุณต้องเริ่มสืบสวนคดีนี้ใหม่อีกครั้ง");
+                        this.startCase(c.id);
+                    } else {
+                        alert(`❌ คำตอบยังไม่ถูกต้อง! หัวใจเหลือ ${this.state.lives} ดวง ลองวิเคราะห์เบาะแสอีกครั้ง`);
+                    }
+                }
+            }
+
+            showFeedbackScreen(c, score, stars, timeSpent) {
+                document.getElementById('feedback-case-tag').textContent = `CASE #${String(c.id).padStart(2, '0')} SOLVED`;
+                document.getElementById('feedback-score').textContent = `+${score}`;
+                document.getElementById('feedback-stars').textContent = '⭐'.repeat(stars);
+
+                const mins = Math.floor(timeSpent / 60);
+                const secs = timeSpent % 60;
+                document.getElementById('feedback-time').textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                document.getElementById('feedback-lesson-text').textContent = c.lesson;
+
+                // Next case button check
+                const btnNext = document.getElementById('btn-next-case');
+                if (c.id < 10) {
+                    btnNext.style.display = 'flex';
+                } else {
+                    btnNext.style.display = 'none';
+                }
+
+                // Trigger Confetti FX
+                if (typeof confetti === 'function') {
+                    confetti({ particleCount: 70, spread: 70, origin: { y: 0.6 } });
+                }
+
+                this.showScreen('feedback');
+            }
+
+            proceedToNextCase() {
+                if (this.state.currentCase && this.state.currentCase.id < 10) {
+                    this.startCase(this.state.currentCase.id + 1);
+                } else {
+                    this.showScreen('cases');
+                }
+            }
+
+            confirmExitCase() {
+                if (confirm("คุณแน่ใจหรือไม่ว่าต้องการออกจากคดีนี้? ความก้าวหน้าในคดีนี้จะถูกยกเลิก")) {
+                    clearInterval(this.state.timerInterval);
+                    this.showScreen('cases');
+                }
+            }
+
+            // Check & Unlock Achievements
+            checkAchievements(timeSpent, stars) {
+                const addAch = (id) => {
+                    if (!this.state.achievements.includes(id)) {
+                        this.state.achievements.push(id);
+                    }
+                };
+
+                addAch('first_case');
+                if (this.state.hintsLeft === 3) addAch('no_hint');
+                if (timeSpent < (this.state.currentCase.timeLimit / 2)) addAch('speed_demon');
+                if (stars === 3) addAch('perfect_score');
+                if (Object.keys(this.state.completedCases).length >= 10) addAch('data_master');
+            }
+
+            // PROFILE RENDER
+            renderProfile() {
+                document.getElementById('input-profile-name').value = this.state.playerName;
+                document.getElementById('profile-avatar-icon').textContent = this.state.avatarIcon;
+
+                const rank = this.getRankTitle();
+                document.getElementById('prof-rank').textContent = rank.title;
+                document.getElementById('prof-score').textContent = this.state.score;
+                document.getElementById('prof-cases').textContent = `${Object.keys(this.state.completedCases).length} / 10`;
+
+                let totalStars = 0;
+                let totalTime = 0;
+                Object.values(this.state.completedCases).forEach(c => {
+                    totalStars += (c.stars || 0);
+                    totalTime += (c.timeSpent || 0);
+                });
+
+                document.getElementById('prof-stars').textContent = `${totalStars} ⭐`;
+                document.getElementById('prof-hints').textContent = `3 Max`;
+
+                const mins = Math.floor(totalTime / 60);
+                const secs = totalTime % 60;
+                document.getElementById('prof-time').textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+                // Render Achievements
+                const container = document.getElementById('achievements-container');
+                container.innerHTML = '';
+
+                ACHIEVEMENTS_LIST.forEach(ach => {
+                    const isUnlocked = this.state.achievements.includes(ach.id);
+                    const card = document.createElement('div');
+                    card.className = `p-3 rounded-2xl flex items-center gap-3 border ${isUnlocked ? 'bg-cyber-purple/20 border-cyber-purple text-white' : 'bg-cyber-dark/50 border-gray-800 text-gray-500 opacity-60'}`;
+                    card.innerHTML = `
+                        <div class="text-2xl">${isUnlocked ? '🏅' : '🔒'}</div>
+                        <div>
+                            <h4 class="font-bold text-xs">${ach.title}</h4>
+                            <p class="text-[10px]">${ach.desc}</p>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            }
+
+            cycleAvatar() {
+                soundFX.play('click');
+                const avatars = ['🕵️‍♂️', '🕵️‍♀️', '🧠', '💻', '⚡', '🤖'];
+                const curIdx = avatars.indexOf(this.state.avatarIcon);
+                this.state.avatarIcon = avatars[(curIdx + 1) % avatars.length];
+                document.getElementById('profile-avatar-icon').textContent = this.state.avatarIcon;
+                this.saveToStorage();
+            }
+
+            saveProfileName() {
+                soundFX.play('click');
+                const val = document.getElementById('input-profile-name').value.trim();
+                if (val) {
+                    this.state.playerName = val;
+                    this.saveToStorage();
+                    this.renderHeader();
+                    alert("บันทึกชื่อนักสืบเรียบร้อยแล้ว!");
+                }
+            }
+
+            // LEADERBOARD RENDER
+            renderLeaderboard() {
+                const container = document.getElementById('leaderboard-list');
+                if (!container) return;
+
+                // Mock high scores + player
+                const mockList = [
+                    { name: 'DataMaster_X', score: 5400, rank: 'Data Master' },
+                    { name: 'CyberSleuth99', score: 4850, rank: 'Data Master' },
+                    { name: this.state.playerName, score: this.state.score, rank: this.getRankTitle().title, isSelf: true },
+                    { name: 'LogicPro_TH', score: 3200, rank: 'Master Detective' },
+                    { name: 'Inspector_G', score: 2100, rank: 'Detective' }
+                ];
+
+                mockList.sort((a, b) => b.score - a.score);
+
+                container.innerHTML = '';
+                mockList.forEach((item, idx) => {
+                    const row = document.createElement('div');
+                    row.className = `glass-panel p-3 rounded-xl flex items-center justify-between text-xs ${item.isSelf ? 'border-cyber-cyan bg-cyber-cyan/10' : 'border-cyber-cyan/10'}`;
+                    row.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <span class="w-6 h-6 rounded-full font-bold flex items-center justify-center text-xs ${idx === 0 ? 'bg-yellow-400 text-black' : idx === 1 ? 'bg-gray-300 text-black' : idx === 2 ? 'bg-amber-600 text-white' : 'bg-gray-800 text-gray-400'}">
+                                ${idx + 1}
+                            </span>
+                            <div>
+                                <span class="font-bold text-white block">${item.name} ${item.isSelf ? '(คุณ)' : ''}</span>
+                                <span class="text-[10px] text-cyber-cyan">${item.rank}</span>
+                            </div>
+                        </div>
+                        <span class="font-extrabold text-cyber-gold text-sm">${item.score} pts</span>
+                    `;
+                    container.appendChild(row);
+                });
+            }
+
+            // Modals
+            openHowToPlayModal() {
+                soundFX.play('click');
+                document.getElementById('modal-howtoplay').classList.remove('hidden');
+            }
+
+            openSettingsModal() {
+                soundFX.play('click');
+                document.getElementById('modal-settings').classList.remove('hidden');
+            }
+
+            closeModals() {
+                soundFX.play('click');
+                document.getElementById('modal-howtoplay').classList.add('hidden');
+                document.getElementById('modal-settings').classList.add('hidden');
+            }
+
+            toggleSFX() {
+                this.state.sfxEnabled = !this.state.sfxEnabled;
+                soundFX.enabled = this.state.sfxEnabled;
+                document.getElementById('btn-toggle-sfx').textContent = this.state.sfxEnabled ? 'ON' : 'OFF';
+                this.saveToStorage();
+            }
+
+            // BACKGROUND CANVAS PARTICLES
+            initBackgroundCanvas() {
+                const canvas = document.getElementById('bg-canvas');
+                if (!canvas) return;
+
+                const ctx = canvas.getContext('2d');
+                let width = canvas.width = window.innerWidth;
+                let height = canvas.height = window.innerHeight;
+
+                window.addEventListener('resize', () => {
+                    width = canvas.width = window.innerWidth;
+                    height = canvas.height = window.innerHeight;
+                });
+
+                const particles = [];
+                for (let i = 0; i < 45; i++) {
+                    particles.push({
+                        x: Math.random() * width,
+                        y: Math.random() * height,
+                        vx: (Math.random() - 0.5) * 0.5,
+                        vy: (Math.random() - 0.5) * 0.5,
+                        radius: Math.random() * 2 + 1
+                    });
+                }
+
+                function animate() {
+                    ctx.clearRect(0, 0, width, height);
+                    ctx.fillStyle = '#00f0ff';
+                    ctx.strokeStyle = 'rgba(0, 240, 255, 0.08)';
+
+                    particles.forEach((p, i) => {
+                        p.x += p.vx;
+                        p.y += p.vy;
+
+                        if (p.x < 0 || p.x > width) p.vx *= -1;
+                        if (p.y < 0 || p.y > height) p.vy *= -1;
+
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                        ctx.fill();
+
+                        for (let j = i + 1; j < particles.length; j++) {
+                            const p2 = particles[j];
+                            const dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+                            if (dist < 120) {
+                                ctx.beginPath();
+                                ctx.moveTo(p.x, p.y);
+                                ctx.lineTo(p2.x, p2.y);
+                                ctx.stroke();
+                            }
+                        }
+                    });
+
+                    requestAnimationFrame(animate);
+                }
+
+                animate();
+            }
+        }
+
+        // INITIALIZE GAME ON DOM READY
+        let game = null;
+        window.addEventListener('DOMContentLoaded', () => {
+            game = new GameEngine();
+        });
+    </script>
+</body>
+</html>
